@@ -1,13 +1,18 @@
 import {Card, Image, Button} from "semantic-ui-react";
-import { Activity } from "../../../App/models/activity";
+import LoadingComponent from "../../../App/layout/LoadingComponent";
+import { useStore } from "../../../App/stores/store";
 
-interface Props{
-    activity: Activity;
-    cancelSelectActivity: () => void;
-    openForm: (id: string)=> void;
-}
 
-export default function ActivityDetails({activity, cancelSelectActivity, openForm}: Props){
+export default function ActivityDetails(){
+
+    const {activityStore} = useStore();
+    const {selectedActivity: activity, openForm, cancelSelectedActivity} = activityStore;
+
+    //Adding because typescripts isn't that smart to understand that we have an activity 
+    //othervise we kan just add an '?' or '!' at our properties it's the same thing
+    if(!activity) 
+        return <LoadingComponent/>;
+
     return(
         <Card fluid>
             <Image src={`/assets/categoryImages/${activity.category}.jpg`}/>
@@ -26,7 +31,7 @@ export default function ActivityDetails({activity, cancelSelectActivity, openFor
             <Card.Content extra>
                 <Button.Group widths='2'>
                     <Button onClick={() => openForm(activity.id)} basic color='blue' content='Edit'/>
-                    <Button onClick={cancelSelectActivity} basic color='grey' content='Cancel'/>
+                    <Button onClick={cancelSelectedActivity} basic color='grey' content='Cancel'/>
                 </Button.Group>
             </Card.Content>
         </Card>

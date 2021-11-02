@@ -1,101 +1,30 @@
-import { useEffect, useState } from 'react';
-import axios from 'axios';
+import { useEffect } from 'react';
 import { Container } from 'semantic-ui-react';
-import {Activity} from '../models/activity';
 import NavBar from "./NavBar"
 import ActivityDashboard from "../../features/activities/dashboard/ActivityDashboard";
-import {v4 as uuid} from "uuid";
-import agent from "../api/agent";
 import LoadingComponent from './LoadingComponent';
+import { useStore } from '../stores/store';
+import { observer } from 'mobx-react-lite';
 
 function App() {
-  const [activites, setActivities] = useState<Activity[]>([]);
-  const [selectedActivity, setSelectedActivity] = useState<Activity | undefined>(undefined);
-  const [editMode, setEditMode] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  
+  const {activityStore} = useStore();
+
+  //Listing Activites and spliting date and time, then pushing activities
   useEffect(() => {
-    agent.Activities.list().then((response) => {
-      let activities: Activity[] = [];
-      response.forEach(activity => {
-        activity.date = activity.date.split('T')[0];
-        activities.push(activity);
-      })
-      setActivities(activities);
-      setLoading(false);
-    })
-  }, [])
+    activityStore.loadingActivities();
+  }, [activityStore])
 
-  function handleSelectActivity(id: string){
-    setSelectedActivity(activites.find(x=>x.id === id))
-  }
-  
-  function handleCancelSelectActivity(){
-    setSelectedActivity(undefined);
-  }
-
-  function handleFormOpen(id?: string){
-    id ? handleSelectActivity(id): handleCancelSelectActivity();
-    setEditMode(true);
-  }
-
-  function handleFormClose(){
-    setEditMode(false);
-  }
-
-  function handleDeleteActivity(id: string){
-    setSubmitting(true);
-    agent.Activities.delete(id).then(() => {
-      setActivities([...activites.filter(x => x.id !== id)])
-      setSubmitting(false);
-    })
-  }
-
-  /*'...' is called the Spread Syntax or Spread Operator. This allows an iterable such as 
-    an array expression or string to be expanded or an object expression to be expanded wherever placed.*/
-  function handleCreateOrEditActivity(activity: Activity){
-    setSubmitting(true);
-    if(activity.id){
-      agent.Activities.update(activity).then(() => {
-        setActivities([...activites.filter(x=> x.id !== activity.id), activity])
-        setSelectedActivity(activity);
-        setEditMode(false);
-        setSubmitting(false);
-      })
-    } else{
-      activity.id = uuid();
-      agent.Activities.create(activity).then(() => {
-        setActivities([...activites, activity,])
-        setSelectedActivity(activity);
-        setEditMode(false);
-        setSubmitting(false);
-      })
-    }
-  }
-
-  if(loading) 
+  if(activityStore.loadingInitial) 
     return <LoadingComponent content='Loading app'/>
 
   return (
     <>
-      <NavBar openForm={handleFormOpen}/>
+      <NavBar/>
       <Container style={{marginTop: '7em'}}>
-      <ActivityDashboard 
-        activities={activites}
-        selectedActivity ={selectedActivity}
-        selectActivity ={handleSelectActivity}
-        cancelSelectActivity={handleCancelSelectActivity}
-        editMode={editMode}
-        openForm={handleFormOpen}
-        closeForm={handleFormClose}
-        createOrEdit={handleCreateOrEditActivity}
-        deleteActivity={handleDeleteActivity}
-        submitting={submitting}  
-      />
+      <ActivityDashboard/>
       </Container>
     </>
   );
 }
 
-export default App;
+export default observer(App);
